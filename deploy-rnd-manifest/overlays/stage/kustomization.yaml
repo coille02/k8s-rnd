@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: ${account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/rnd_webserver
+  newName: ${account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/rnd_webserver
+  newTag: v1.0.0
+resources:
+- ../../base
+patches:
+- path: rnd-deployment-patch.yaml
+  target:
+    kind: Deployment
+- path: rnd-service-patch.yaml
+  target:
+    kind: Service
+- path: rnd-hpa-patch.yaml
+  target:
+    kind: HorizontalPodAutoscaler

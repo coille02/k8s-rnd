@@ -1,0 +1,19 @@
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: default
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: ${eks_cluster_id}
+    Name: ${subnet_ids}
+  securityGroupSelector:
+    karpenter.sh/discovery: ${eks_cluster_id}
+  tags:
+    karpenter.sh/discovery: ${eks_cluster_id}
+  blockDeviceMappings: # (2)
+  - deviceName: /dev/xvda
+    ebs:
+      volumeSize: 100Gi
+      volumeType: gp3
+      encrypted: true
+      deleteOnTermination: true

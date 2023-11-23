@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "rnd-webapp-ingress"
+  namespace: default
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: rnd-node-group
+    alb.ingress.kubernetes.io/group.order: "1"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 12001}]'
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: "rnd-webapp"
+            port:
+              number: 12001

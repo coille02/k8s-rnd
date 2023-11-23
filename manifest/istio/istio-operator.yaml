@@ -1,0 +1,59 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: istiocontrolplane
+spec:
+  profile: default
+  components:
+    egressGateways:
+    - name: istio-egressgateway
+      enabled: true
+      k8s:
+        hpaSpec:
+          minReplicas: 2
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      label:
+        istio: ingressgateway
+      k8s:
+        service:
+          externalTrafficPolicy: Local
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 2000m
+            memory: 1024Mi
+        hpaSpec:
+          minReplicas: 2
+          maxReplicas: 4
+        service:
+          type: NodePort
+        serviceAnnotations:
+          alb.ingress.kubernetes.io/healthcheck-path: /healthz/ready
+          alb.ingress.kubernetes.io/healthcheck-port: "32048"
+    pilot:
+      enabled: true
+      k8s:
+        hpaSpec:
+          minReplicas: 2
+        overlays:
+        - kind: ValidatingWebhookConfiguration
+          name: istio-validator-istio-system
+          patches:
+          - path: webhooks[0].failurePolicy
+            value: Ignore
+  meshConfig:
+    enableTracing: true
+    defaultConfig:
+      holdApplicationUntilProxyStarts: true
+      tracing: # Enable Datadog Tracing
+        datadog:
+          address: $(HOST_IP):8126
+        sampling: 100.0 # 모든 request를 tracing 한다
+    accessLogFile: /dev/stdout
+    outboundTrafficPolicy:
+      mode: ALLOW_ANY

@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rnd-webapp
+  namespace: stage
+  labels:
+    ASPNETCORE_ENVIRONMENT: stage
+    tags.datadoghq.com/env: stage
+    tags.datadoghq.com/service: rnd-webapp
+    tags.datadoghq.com/version: "v1.0.0"
+    version: "v1.0.0"
+spec:
+  selector:
+    matchLabels:
+      app: rnd-webapp
+      version: "v1.0.0"
+  template:
+    metadata:
+      labels:
+        app: rnd-webapp
+        tags.datadoghq.com/env: stage
+        tags.datadoghq.com/service: rnd-webapp
+        tags.datadoghq.com/version: "v1.0.0"
+        version: "v1.0.0"
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        admission.datadoghq.com/dotnet-lib.version: v2.40.0
+    spec:
+      containers:
+      - name: rnd-webapp
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "stage"
+        - name: CORECLR_ENABLE_PROFILING
+          value: "1"
+        - name: CORECLR_PROFILER
+          value: "{846F5F1C-F9AE-4B07-969E-05C26BC060D8}"
+        - name: CORECLR_PROFILER_PATH
+          value: "./datadog/linux-x64/Datadog.Trace.ClrProfiler.Native.so"
+        - name: DD_DOTNET_TRACER_HOME
+          value: "./datadog/linux-x64"
+        - name: DD_TRACE_DEBUG
+          value: "true"
+        - name: DD_PROFILING_ENABLED
+          value: "1"
+        - name: LD_PRELOAD
+          value: "./datadog/linux-x64/Datadog.Linux.ApiWrapper.x64.so"
+        - name: DD_LOGS_INJECTION
+          value: "true"
+        - name: DD_RUNTIME_METRICS_ENABLED
+          value: "true"
+        - name: DD_APPSEC_ENABLED
+          value: "true"
+        - name: Custom_DD_API_KEY
+          value: "${API_KEY}"
+        - name: Custom_DD_Serilog_Intake_Site
+          value: "https://http-intake.logs.datadoghq.com"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /home/rnd/Deployments/webapp/appsettings.stage.json
+          subPath: appsettings.stage.json
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1
+            memory: 1Gi
+      volumes:
+      - name: config-volume
+        configMap:
+          name: stage-rnd-webapp-config

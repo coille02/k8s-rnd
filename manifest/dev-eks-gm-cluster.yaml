@@ -1,0 +1,38 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: dev-eks-rnd
+  region: ap-northeast-2
+  version: "1.28"
+
+vpc:
+  cidr: "10.47.8.0/23"
+  subnets:
+    public:
+      ap-northeast-2a:
+        id: "\tsubnet-0aa14d6c643debdc3"
+        cidr: "10.0.0.0/24"
+      ap-northeast-2c:
+        id: "subnet-07ac949a8cae1ea28"
+        cidr: "10.0.1.0/24"
+
+managedNodeGroups:
+- name: dev-rnd-node-group # 클러스터의 노드 그룹명
+  instanceType: t3.medium # 클러스터 워커 노드의 인스턴스 타입
+  desiredCapacity: 2 # 클러스터 워커 노드의 갯수
+  volumeSize: 30 # 클러스터 워커 노드의 EBS 용량 (단위: GiB)
+  iam:
+    withAddonPolicies:
+      imageBuilder: true # Amazon ECR에 대한 권한 추가
+      albIngress: true # albIngress에 대한 권한 추가
+      cloudWatch: true # cloudWatch에 대한 권한 추가
+      autoScaler: true # auto scaling에 대한 권한 추가
+      ebs: true # EBS CSI Driver에 대한 권한 추가
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["*"]
+
+iam:
+  withOIDC: true

@@ -1,0 +1,45 @@
+kind: Gateway
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: argocd-server
+  namespace: istio-system
+spec:
+  servers:
+  - hosts:
+    - argo.test.com
+    port:
+      name: https-argo
+      number: 80
+      protocol: HTTP
+  selector:
+    istio: ingressgateway
+#VirtualService
+---
+kind: VirtualService
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: argocd-server
+  namespace: istio-system
+spec:
+  gateways:
+  - argocd-server
+  hosts:
+  - argo.test.com
+  http:
+  - route:
+    - destination:
+        host: argocd-server.argocd.svc.cluster.local
+        port:
+          number: 80
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: argocd-server
+  namespace: istio-system
+spec:
+  host: argocd-server.argocd.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE

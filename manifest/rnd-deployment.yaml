@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rnd-webapp
+  namespace: rnd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /api/System/GetSystemHealth
+  labels:
+    ASPNETCORE_ENVIRONMENT: stage
+    app: rnd-webapp
+    service: rnd-web
+  name: rnd-webapp
+  namespace: rnd
+spec:
+  ports:
+  - name: http
+    nodePort: 32001
+    port: 12001
+    targetPort: 12001
+  selector:
+    app: rnd-webapp
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    ASPNETCORE_ENVIRONMENT: stage
+    app: rnd-webapp
+    tags.datadoghq.com/env: stage
+    tags.datadoghq.com/service: rnd-webapp
+    tags.datadoghq.com/version: v1.0.0
+    version: v1.0.0
+  name: rnd-webapp
+  namespace: rnd
+spec:
+  selector:
+    matchLabels:
+      app: rnd-webapp
+      version: v1.0.0
+  template:
+    metadata:
+      annotations:
+        admission.datadoghq.com/dotnet-lib.version: v2.40.0
+        sidecar.istio.io/rewriteAppHTTPProbers: ture
+      labels:
+        admission.datadoghq.com/enabled: "true"
+        app: rnd-webapp
+        tags.datadoghq.com/env: stage
+        tags.datadoghq.com/service: rnd-webapp
+        tags.datadoghq.com/version: v1.0.0
+        version: v1.0.0
+    spec:
+      containers:
+      - env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: stage
+        - name: CORECLR_ENABLE_PROFILING
+          value: "1"
+        - name: CORECLR_PROFILER
+          value: '{846F5F1C-F9AE-4B07-969E-05C26BC060D8}'
+        - name: CORECLR_PROFILER_PATH
+          value: ./datadog/linux-x64/Datadog.Trace.ClrProfiler.Native.so
+        - name: DD_DOTNET_TRACER_HOME
+          value: ./datadog/linux-x64
+        - name: DD_TRACE_DEBUG
+          value: "true"
+        - name: DD_PROFILING_ENABLED
+          value: "1"
+        - name: LD_PRELOAD
+          value: ./datadog/linux-x64/Datadog.Linux.ApiWrapper.x64.so
+        - name: DD_LOGS_INJECTION
+          value: "true"
+        - name: DD_RUNTIME_METRICS_ENABLED
+          value: "true"
+        - name: DD_APPSEC_ENABLED
+          value: "true"
+        - name: Custom_DD_API_KEY
+          value: ${API_KEY}
+        - name: Custom_DD_Serilog_Intake_Site
+          value: https://http-intake.logs.datadoghq.com
+        image: ${account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/rnd_webapp:v1.0.0
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 20
+          httpGet:
+            path: /api/System/GetSystemHealth
+            port: 12001
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 5
+        name: rnd-webapp
+        ports:
+        - containerPort: 12001
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /api/System/GetSystemHealth
+            port: 12001
+          initialDelaySeconds: 12
+          periodSeconds: 5
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 1
+            memory: 512Mi
+          limits:
+            cpu: 2
+            memory: 2Gi
+        volumeMounts:
+        - mountPath: /apps/appsettings.json
+          name: config-volume
+          subPath: appsettings.json
+      volumes:
+      - configMap:
+          name: rnd-webapp-config
+        name: config-volume

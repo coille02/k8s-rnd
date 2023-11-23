@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rnd-webapp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rnd-webapp
+  labels:
+    app: rnd-webapp
+    service: rnd-web
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/api/System/GetSystemHealth"
+spec:
+  selector:
+    app: rnd-webapp
+  type: NodePort
+  ports:
+  - name: http
+    port: 12001 # 서비스가 생성할 포트
+    targetPort: 12001 # 서비스가 접근할 pod의 포트
+    nodePort: 32001

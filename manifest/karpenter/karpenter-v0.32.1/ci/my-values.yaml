@@ -1,0 +1,20 @@
+replicas: 1
+
+controller:
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 1Gi
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ${KarpenterIRSA_arn}
+
+settings:
+  aws:
+    clusterEndpoint: ${eks_cluster_endpoint_id}
+    clusterName: ${eks_cluster_id}
+    defaultInstanceProfile: ${karpenter_profile_id}
+    interruptionQueueName: ${Karpenter_queue_name}

@@ -1,0 +1,10 @@
+configs:
+  credentialTemplates:
+    https-creds:
+      url: ${github-manifest-url}
+      password: ${github-token}
+      username: coille02${github-user}
+  repositories:
+    k8s-rnd-manifest:
+      name: k8s-rnd-manifest
+      url: ${github-manifest-url}

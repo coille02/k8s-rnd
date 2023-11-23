@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rnd-webapp
+  labels:
+    app: rnd-webapp
+spec:
+  selector:
+    matchLabels:
+      app: rnd-webapp
+  template:
+    metadata:
+      labels:
+        app: rnd-webapp
+      annotations:
+        sidecar.istio.io/rewriteAppHTTPProbers: "ture"
+    spec:
+      containers:
+      - name: rnd-webapp
+        image: ${account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/rnd_webapp:latest
+        imagePullPolicy: Always
+        env:
+        ports:
+        - containerPort: 12001
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1.5
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /api/System/GetSystemHealth
+            port: 12001
+          initialDelaySeconds: 20 # 20초 후에 livenessProbe 시작
+          periodSeconds: 5 # 5초 간격으로 체크
+          failureThreshold: 20 # 재시작 전 실패 허용 횟수
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /api/System/GetSystemHealth
+            port: 12001
+          initialDelaySeconds: 15 # 15초 후에 readinessProbe 시작
+          periodSeconds: 5 # 5초 간격으로 체크
+          failureThreshold: 10 # 재시작 전 실패 허용 횟수
+          timeoutSeconds: 5
